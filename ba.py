@@ -320,7 +320,14 @@ class BuchiAutomaton:
         node_match = lambda n1, n2: n1 == n2
         edge_match = lambda e1, e2: e1['symbol'] == e2['symbol']
 
-        return DiGraphMatcher(G1, G2, node_match=node_match, edge_match=edge_match).is_isomorphic()
+        matcher = DiGraphMatcher(G1, G2, node_match=node_match, edge_match=edge_match)
+        if matcher.is_isomorphic():
+            print("Isomorphism:")
+            print("\n".join(sorted([f"{key}\t--->\t{value}" for key, value in matcher.mapping.items()])))
+            return True
+        else:
+            print("No isomorphism found.")
+            return False
     
 if __name__ == "__main__":
     from ba_generator import generate_ba
@@ -330,9 +337,9 @@ if __name__ == "__main__":
     # Test: ba == ba.rename_states()
     renamed = ba.copy()
     renamed.rename_states()
-    print("Equal after renaming...", end="\t")
+    print("Equal after renaming...")
     assert ba.equals(renamed)
-    print("Check")
+    print("Test passed!")
     ba.visualize("original_ba")
     renamed.visualize("renamed_ba")
 
@@ -340,13 +347,13 @@ if __name__ == "__main__":
     ba = BuchiAutomaton()
     assert ba.is_empty()
     other = ba.copy()
-    print("Empty BAs are equal...", end="\t")
+    print("Empty BAs are equal...")
     assert ba.equals(other)
-    print("Check")
+    print("Test passed!")
     ba.visualize("empty_ba")
 
     # Test: Validation
-    print("Validation works correctly...", end="\t")
+    print("Validation works correctly...")
     ## Ex: valid
     ba = BuchiAutomaton(
         states={'1','2'},
@@ -419,11 +426,11 @@ if __name__ == "__main__":
         accepting_states={'2'}   
     )
     assert not ba.is_valid()
-    print("Check")
+    print("Test passed!")
 
     # Test: is_complete()
     ## Ex: complete
-    print("Completeness check works properly...", end="\t")
+    print("Completeness check works properly...")
     ba = BuchiAutomaton(
         states={'1','2'},
         alphabet={'a','b'},
@@ -469,4 +476,4 @@ if __name__ == "__main__":
         accepting_states={'2'}   
     )
     assert not ba.is_complete()
-    print("Check")
+    print("Test passed!")

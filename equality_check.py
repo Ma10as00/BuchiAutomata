@@ -29,7 +29,7 @@ def run_equal_check(ba: BuchiAutomaton, verbose: bool = False) -> bool:
     reduced_ba.rename_states()
     red_up = reduced_ba.upper_part()
     if verbose:
-        red_up.rename_states()
+        # red_up.rename_states()
         red_up.visualize(filename="upper_part_from_reduced_ba")
 
     if verbose:

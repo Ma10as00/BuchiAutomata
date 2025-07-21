@@ -8,7 +8,7 @@ MIN_N_STATES = 3
 MAX_N_STATES = 4
 # Nondeterminism degree
 MIN_NONDET_DEGREE = 1   # >1 ensures completeness
-MAX_NONDET_DEGREE = 2
+MAX_NONDET_DEGREE = 3
 # Number of accepting states
 MIN_N_ACC_STATES = 1    # >1 ensures acceptance
 MAX_N_ACC_STATES = 1
