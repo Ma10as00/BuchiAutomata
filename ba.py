@@ -4,6 +4,7 @@ from graphviz import Digraph
 import re
 import networkx as nx
 from networkx.algorithms.isomorphism import DiGraphMatcher
+import os
 
 PLOTTED_BAs_FOLDER_NAME = "plots"
 
@@ -76,7 +77,7 @@ class BuchiAutomaton:
                     graph.edge(from_state, to_state, taillabel=label, labelfontsize='12', labelangle='15', labeldistance='2')
                     done.add((from_state, to_state))
 
-        graph.render(PLOTTED_BAs_FOLDER_NAME + "/" + filename, format="png", cleanup=True)
+        graph.render(os.path.join(PLOTTED_BAs_FOLDER_NAME, filename), format="png", cleanup=True)
 
     def reduce_nondeterm(self) -> "BuchiAutomaton":
         """
@@ -178,7 +179,7 @@ class BuchiAutomaton:
             for symbol in self.alphabet:
 
                 # Initialize new state
-                new_state_sets = []
+                new_state = []
 
                 for state_set in state_sets:
                     # If the set represents several states from the original automaton, we should consider them all individually
@@ -202,22 +203,23 @@ class BuchiAutomaton:
                         # Build string for the accepting target set
                         accepting_set_string = "{" + ",".join(sorted(accepting_target_states)) + "}"
                         # Add it to the new state if not already present
-                        if accepting_set_string not in new_state_sets:
-                            new_state_sets.append(accepting_set_string)
+                        if accepting_set_string not in new_state:
+                            new_state.append(accepting_set_string)
 
                     if nonacc_target_states:
                         # Build string for the non-accepting target set
                         nonacc_set_string = "{" + ",".join(sorted(nonacc_target_states)) + "}"
-                        if nonacc_set_string not in new_state_sets:
-                            new_state_sets.append(nonacc_set_string)
+                        if nonacc_set_string not in new_state:
+                            new_state.append(nonacc_set_string)
 
-                if new_state_sets:
+                if new_state:
                     # Build string for new state
-                    new_state = ",".join(sorted(new_state_sets))
+                    new_state.reverse() # Sets were added from right to left
+                    new_state = ",".join(new_state)
                     # Add new state to to_do list if not already added
-                    if (new_state not in done):
-                        if (new_state not in to_do):
-                            if (not new_state == current_state):
+                    if (new_state not in done) and \
+                        (new_state not in to_do) and \
+                        (new_state != current_state):
                                 to_do.add(new_state)
                     # Add transition to new state
                     upper_part.add_transition(current_state, symbol, new_state)
@@ -301,7 +303,21 @@ class BuchiAutomaton:
             f"Accepting States: {self.accepting_states}\n"
             f"Transitions: \n{transitions_str()}"
         ) 
+        
+    def equals(self, other: "BuchiAutomaton") -> bool:
+        matcher = self.get_matcher(other)
+        return matcher.is_isomorphic()
+    
+    def get_matcher(self, other: "BuchiAutomaton") -> DiGraphMatcher:
+        G1 = self.to_nx_graph()
+        G2 = other.to_nx_graph()
 
+        node_match = lambda n1, n2: n1 == n2
+        edge_match = lambda e1, e2: e1['symbol'] == e2['symbol']
+
+        matcher = DiGraphMatcher(G1, G2, node_match=node_match, edge_match=edge_match)
+        return matcher
+    
     def to_nx_graph(self) -> nx.DiGraph:
         G = nx.DiGraph()
         for state in self.states:
@@ -312,22 +328,16 @@ class BuchiAutomaton:
             for tgt in targets:
                 G.add_edge(from_state, tgt, symbol=symbol)
         return G
-
-    def equals(self, other: "BuchiAutomaton") -> bool:
-        G1 = self.to_nx_graph()
-        G2 = other.to_nx_graph()
-
-        node_match = lambda n1, n2: n1 == n2
-        edge_match = lambda e1, e2: e1['symbol'] == e2['symbol']
-
-        matcher = DiGraphMatcher(G1, G2, node_match=node_match, edge_match=edge_match)
+    
+    def print_mapping(self, other: "BuchiAutomaton") -> None:
+        matcher = self.get_matcher(other)
         if matcher.is_isomorphic():
             print("Isomorphism:")
             print("\n".join(sorted([f"{key}\t--->\t{value}" for key, value in matcher.mapping.items()])))
-            return True
+            return
         else:
             print("No isomorphism found.")
-            return False
+            return
     
 if __name__ == "__main__":
     from ba_generator import generate_ba
