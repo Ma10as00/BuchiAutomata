@@ -38,13 +38,14 @@ def run_equal_check(ba: BuchiAutomaton, verbose: bool = False) -> bool:
     if uppper_part.equals(red_up):
         if verbose:
             print("EQUAL")
+            uppper_part.print_mapping(red_up)
         return True
     else:
         if verbose:
             print("NOT EQUAL")
         return False
 
-def iterate_equal_check(it: int) -> BuchiAutomaton | bool:
+def iterate_equal_check(it: int, plotting: bool=False) -> BuchiAutomaton | bool:
     """
     Generates a new BA per iteration, and runs the equality check on it.
     
@@ -52,8 +53,9 @@ def iterate_equal_check(it: int) -> BuchiAutomaton | bool:
     """
     for i in tqdm(range(it)):
         ba = generate_ba()
-        ba.visualize(filename=f"iteration_{str(i+1)}")
-        if (run_equal_check(ba, False)):
+        if plotting:
+            ba.visualize(filename=f"iteration_{str(i+1)}")
+        if (run_equal_check(ba)):
             continue
         else:
             return ba
@@ -61,7 +63,7 @@ def iterate_equal_check(it: int) -> BuchiAutomaton | bool:
 
 def run_equal_check_on_ba_file(filename: str) -> bool:
     ba = load_ba(filename)
-    return run_equal_check(ba, True)
+    return run_equal_check(ba, verbose=True)
 
 if __name__ == "__main__":
     done = False
@@ -74,6 +76,8 @@ if __name__ == "__main__":
             done = True
         elif version == "g":
             iterations = int(input("How many BAs should we generate and check for equality?\t"))
+            plot_or_not = input("Do you want the BAs to be plotted (this will slow down the process)? (y/n)\t")
+            plotting = True if plot_or_not == "y" else False
             print(f"Result: {iterate_equal_check(iterations)}")
             done = True
         else:

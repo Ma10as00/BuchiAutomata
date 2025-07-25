@@ -4,17 +4,17 @@ from ba_saver import ask_n_save
 from ba import PLOTTED_BAs_FOLDER_NAME
 
 # Number of states
-MIN_N_STATES = 3
-MAX_N_STATES = 4
+MIN_N_STATES = 1
+MAX_N_STATES = 6
 # Nondeterminism degree
-MIN_NONDET_DEGREE = 1   # >1 ensures completeness
-MAX_NONDET_DEGREE = 3
+MIN_NONDET_DEGREE = 0   # >1 ensures completeness
+MAX_NONDET_DEGREE = 4
 # Number of accepting states
 MIN_N_ACC_STATES = 1    # >1 ensures acceptance
-MAX_N_ACC_STATES = 1
+MAX_N_ACC_STATES = 3
 # Size of alphabet
 MIN_ALPHABET_SIZE = 2
-MAX_ALPHABET_SIZE = 2
+MAX_ALPHABET_SIZE = 3
 
 def generate_ba(min_n_states: int=MIN_N_STATES,
                 max_n_states: int=MAX_N_STATES, 
