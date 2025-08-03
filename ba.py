@@ -1,3 +1,26 @@
+"""Class representing Büchi Automata objects.
+
+This file defines the class BuchiAutomaton, with field variables:
+- states: Set[str]
+- alphabet: Set[str]
+- transitions: Dict[Tuple[str, str], Set[str]]
+- initial_state: str
+- accepting_states: Set[str]
+
+Important class methods are:
+- add_transition(self, from_state, symbol, to_state, accept_new_elements=True)
+    - Adds new transition to the automaton. 
+    If accept_new_elements = False, then a not-yet-existent state or symbol will cause an error
+- visualize(self, filename)
+    - Plots a .png image of the automaton
+- reduce_nondeterm(self)
+    - Performs an algorithm for non-determinism reduction, developed by Ultes-Nitsche
+- upper_part(self)
+    - Performs the first step of the complementation construction in Allred & Ultes-Nitshce's algorithm
+- equals(self, other)
+    - Checks if two automata are isomorphic, i.e. if there is a bijective mapping between them that preserves the structure. 
+"""
+
 from dataclasses import dataclass, field
 from typing import Set, Dict, Tuple
 from graphviz import Digraph
@@ -10,6 +33,28 @@ PLOTTED_BAs_FOLDER_NAME = "plots"
 
 @dataclass
 class BuchiAutomaton:
+    """Class representing Büchi Automata objects.
+
+    :Fields:
+    - states: Set[str]
+    - alphabet: Set[str]
+    - transitions: Dict[Tuple[str, str], Set[str]]
+    - initial_state: str
+    - accepting_states: Set[str]
+
+    :Important methods:
+    - add_transition(self, from_state, symbol, to_state, accept_new_elements=True)
+        - Adds new transition to the automaton. 
+        If accept_new_elements = False, then a not-yet-existent state or symbol will cause an error
+    - visualize(self, filename)
+        - Plots a .png image of the automaton
+    - reduce_nondeterm(self)
+        - Performs an algorithm for non-determinism reduction, developed by Ultes-Nitsche
+    - upper_part(self)
+        - Performs the first step of the complementation construction in Allred & Ultes-Nitshce's algorithm
+    - equals(self, other)
+        - Checks if two automata are isomorphic, i.e. if there is a bijective mapping between them that preserves the structure. 
+    """
     states: Set[str] = field(default_factory=set)
     alphabet: Set[str] = field(default_factory=set)
     transitions: Dict[Tuple[str, str], Set[str]] = field(default_factory=dict) # (state, symbol) -> set of target states
@@ -17,6 +62,19 @@ class BuchiAutomaton:
     accepting_states: Set[str] = field(default_factory=set)
 
     def add_transition(self, from_state: str, symbol: str, to_state: str, accept_new_elements: bool = True) -> None:
+        """
+        Adds a new transition to self.transitions. 
+
+        Args:
+            from_state (str): The source state of the new transition
+            symbol (str): The symbol of the transition
+            to_state (str): The target state of the transition
+            accept_new_elements (bool=True): If false, an error will occur if the given states are not in self.states or the symbol is not in self.alphabet. \
+            If true, the not-yet-present states or symbol will be added to self.states or self.alphabet, respectively.
+
+        Returns:
+            None
+        """
         if accept_new_elements:
             if from_state not in self.states:
                 self.states.add(from_state)
@@ -37,18 +95,22 @@ class BuchiAutomaton:
     def visualize(self, filename: str="buchi_automaton") -> None:
         """
         Writes an image of this BuchiAutomaton to a file with the specified filename.
+
+        Args:
+            filename (str="buchi_automaton"): Indicating what to call the new image file
+
+        Returns:
+            None
         """
-        graph = Digraph(engine="circo")   # Options: "circo", "twopi", "fdp", "sfdp", "neato"
-        # graph.attr(nodesep="0.5")
-        # graph.attr(ranksep="0.5")
-        graph.attr(splines="polyline")
+        graph = Digraph(engine="circo")     # Options: "circo", "dot", "sfdp", "neato", "twopi"
+        graph.attr(splines="true")        # Options: true/spline, false/line, polyline, curved
 
         # Special case: Empty BA
         if self.is_empty():
             graph.node(f"init", label="", shape="point")
             graph.node("nothing", label="nothing", shape="none")
             graph.edge(f"init", "nothing")
-            graph.render(PLOTTED_BAs_FOLDER_NAME + "/" + filename, format="png", cleanup=True)
+            graph.render(os.path.join(PLOTTED_BAs_FOLDER_NAME, filename), format="png", cleanup=True)
             return
 
         # Mark initial states with an arrow
@@ -80,16 +142,17 @@ class BuchiAutomaton:
         graph.render(os.path.join(PLOTTED_BAs_FOLDER_NAME, filename), format="png", cleanup=True)
 
     def reduce_nondeterm(self) -> "BuchiAutomaton":
-        """
-        Executes an algorithm to reduce the non-determinism degree of the Büchi automaton. 
+        """        
+        Executes an algorithm by Ultes-Nitsche to reduce the non-determinism degree of the Büchi automaton. 
         The resulting BA will have non-determinism degree <= 2. Furthermore, if the non-determinism degree is exactly 2,
         a state with two possible transitions for a given symbol will always lead to one accepting state
-        and one non-accepting state for this symbol (i.e., it will satisfy property P).
+        and one non-accepting state for this symbol (i.e., it will satisfy property PI).
 
         This function assumes that the original automaton's state ids does not contain any commas (',').
         This condition can be fullfilled by calling rename_states().
 
-        :return: A Büchi automaton that accepts the same language as this, with a non-determinism degree of at most 2
+        Returns:
+            "BuchiAutomaton": A Büchi automaton that accepts the same language as this, with a non-determinism degree of at most 2
         """
         # Initialize the reduced automaton with the initial state
         reduced_states = set()
@@ -153,10 +216,14 @@ class BuchiAutomaton:
 
     def upper_part(self) -> "BuchiAutomaton":
         """
-        Constructs the upper part A' of the complement automaton, given Büchi Automaton A.
+        Constructs the upper part A' of the complement automaton, given Büchi Automaton A. \
+        This is the first step in the complementation algorithm developed by Allred and Ultes-Nitsche.
 
         This function assumes that the original automaton's state ids does not contain any commas or curly brackets (, { }).
         This condition can be fullfilled by calling rename_states().
+
+        Returns:
+            "BuchiAutomaton": The constructed upper part A'
         """
         # Initialize the reduced automaton with the initial state
         states = set()
@@ -176,19 +243,22 @@ class BuchiAutomaton:
             state_sets.reverse() # to consider the right-most set first
 
             # Go through all possible input symbols
-            for symbol in self.alphabet:
+            for a in self.alphabet:
 
                 # Initialize new state
-                new_state = []
+                new_state = []  # representing the tuple for the new state
+                included_target_states = set() # To make sure all sets S are pairwise disjoint
 
-                for state_set in state_sets:
+                for S in state_sets:
                     # If the set represents several states from the original automaton, we should consider them all individually
-                    repr_states = state_set.split(sep=",")
+                    repr_states = S.split(sep=",")
                     target_states = set()
-                    for state in repr_states:
-                        if ((state, symbol) in self.transitions.keys()):
-                            target_states = target_states.union(self.transitions[(state, symbol)])
-                    
+                    for q in repr_states:
+                        if ((q, a) in self.transitions.keys()):
+                            target_states.update(self.transitions[(q, a)].difference(included_target_states))
+                    # Make sure target states only get included once
+                    included_target_states.update(target_states)
+
                     # Split target states into accepting and non-accepting
                     accepting_target_states = []
                     nonacc_target_states = []
@@ -222,7 +292,7 @@ class BuchiAutomaton:
                         (new_state != current_state):
                                 to_do.add(new_state)
                     # Add transition to new state
-                    upper_part.add_transition(current_state, symbol, new_state)
+                    upper_part.add_transition(current_state, a, new_state)
 
             # Mark the current state as checked for transitions
             done.add(current_state)
@@ -230,11 +300,9 @@ class BuchiAutomaton:
         return upper_part
 
     def rename_states(self) -> None:
-        """
-        Renames the states of this BuchiAutomaton to simply "0", "1", "2", ...
-        """
+        """Renames the states of this BuchiAutomaton to simply "0", "1", "2", ..."""
         old_states = list(self.states)
-        new_states = [str(i) for i in range(len(old_states))]
+        new_states = [chr(ord('A') + (i)) for i in range(len(old_states))]
         # Mapping from old names to new names
         map = dict(zip(old_states, new_states))
 
@@ -252,7 +320,11 @@ class BuchiAutomaton:
 
     def is_valid(self) -> bool:
         """
-        Checks if this BA is valid, i.e. that the states, tranistions, initial state and accepting states all match.
+        Checks if this BA is valid, i.e. that the states, tranistions, \
+        initial state and accepting states all match.
+
+        Returns:
+            bool: True if this BA is valid, False if not.
         """
         if self.initial_state not in self.states and not self.initial_state == "":
             return False
@@ -267,13 +339,20 @@ class BuchiAutomaton:
     
     def is_empty(self) -> bool:
         """
-        Checks if this BA is valid and empty, i.e. without any states.
+        Checks if this BA is empty (and valid), i.e. without any states.
+
+        Returns:
+            bool: True if this BA is empty and valid, False if not.
         """
         return self.is_valid() and len(self.states) < 1
     
     def is_complete(self) -> bool:
         """
-        Checks if this BA is valid and complete, i.e. every state has a transition for every symbol in the alphabet.
+        Checks if this BA is valid and complete, i.e. every state has a transition \
+        for every symbol in the alphabet.
+        
+        Returns:
+            bool: True if this BA is complete, False if not.
         """
         for state in self.states:
             for symbol in self.alphabet:
@@ -284,6 +363,12 @@ class BuchiAutomaton:
         return True
     
     def copy(self) -> "BuchiAutomaton":
+        """
+        Returns a copy of this BA-object.
+
+        Returns:
+            "BuchiAutomaton": A copy of this BA
+        """
         copy = BuchiAutomaton(
             states=self.states,
             alphabet=self.alphabet,
@@ -294,6 +379,7 @@ class BuchiAutomaton:
         return copy
 
     def __str__(self):
+        """The string representation of this BA."""
         def transitions_str():
             return "\n".join([f"{from_state} --{symbol}--> {to_states}" for (from_state, symbol), to_states in self.transitions.items()])
         return (
@@ -305,10 +391,30 @@ class BuchiAutomaton:
         ) 
         
     def equals(self, other: "BuchiAutomaton") -> bool:
+        """
+        Checks if two automata are isomorphic, i.e. if there is a \
+        bijective mapping between them that preserves the structure.
+
+        Args:
+            other ("BuchiAutomaton"): The BA to compare this BA to.
+
+        Returns:
+            bool: True if the other BA forms an isomorphism with this BA, False if not.
+        """
         matcher = self.get_matcher(other)
         return matcher.is_isomorphic()
     
     def get_matcher(self, other: "BuchiAutomaton") -> DiGraphMatcher:
+        """
+        Returns an isomorphism checker object, called a matcher,\
+        between this BA and the other BA.
+
+        Args:
+            other ("BuchiAutomaton"): The other BA
+
+        Returns:
+            DiGraphMatcher: The matcher
+        """
         G1 = self.to_nx_graph()
         G2 = other.to_nx_graph()
 
@@ -319,6 +425,7 @@ class BuchiAutomaton:
         return matcher
     
     def to_nx_graph(self) -> nx.DiGraph:
+        """Returns the directed graph representing this BA, as specified in the module NetworkX."""
         G = nx.DiGraph()
         for state in self.states:
             G.add_node(state, 
@@ -330,6 +437,16 @@ class BuchiAutomaton:
         return G
     
     def print_mapping(self, other: "BuchiAutomaton") -> None:
+        """
+        Checks if this BA and the other BA are isomorphic. The result is printed to the terminal.
+        If the result is positive, the mapping between their states are also printed.\
+
+        Args:
+            other ("BuchiAutomaton"): The other BA
+
+        Returns:
+            None
+        """
         matcher = self.get_matcher(other)
         if matcher.is_isomorphic():
             print("Isomorphism:")
@@ -342,6 +459,7 @@ class BuchiAutomaton:
 if __name__ == "__main__":
     from ba_generator import generate_ba
 
+    # Unit testing with a random (not too big) BA
     ba = generate_ba(max_n_states=5, max_n_acc_states=1)
     
     # Test: ba == ba.rename_states()
