@@ -1,7 +1,7 @@
 # BuchiAutomata
 Tool for conceptualizing and visualizing Büchi automata.
 
-As part of my [master thesis](Final Thesis.pdf) project, I developed a Python implementation of Büchi Automata (BA) to support quicker evaluation of new hypotheses.
+As part of my [master thesis](/Final Thesis.pdf) project, I developed a Python implementation of Büchi Automata (BA) to support quicker evaluation of new hypotheses.
 The code consists of 5 scripts: 
 - ba.py
 - ba_generator.py
