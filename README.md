@@ -27,4 +27,4 @@ Then, this script was ran to re-render all the plots of my saved BAs, according 
 ## equality_check.py
 This script  was developed to test the hypothesis U(A)=U(R), i.e. to visualize the results of both paths to the upper part construction, given a Büchi automata A; the direct path without reduction and the indirect path via non-determinism reduction. To identify counter examples, the script was built to generate random automata and compare the output automata U(A) and U(R).
 
-For more details, please refer to the full thesis.
+For more details, please refer to the [full thesis](Final_Thesis.pdf).
